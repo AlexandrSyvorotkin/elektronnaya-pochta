@@ -1,5 +1,7 @@
 export type MailGroup = 'today' | 'yesterday' | 'week' | 'june'
 
+import { getSpecialMail2AttachmentNames } from '@/assets/mail/videos'
+
 export interface MailItem {
   id: string
   sender: string
@@ -12,6 +14,7 @@ export interface MailItem {
   isUnread?: boolean
   isNew?: boolean
   hasAttachment?: boolean
+  videoAttachments?: string[]
   isStarred?: boolean
   isImportant?: boolean
   images?: string[]
@@ -570,6 +573,7 @@ export const sidebarFolders: SidebarFolder[] = [
 ]
 
 export const SPECIAL_MAIL_ID = 'special-alert'
+export const SPECIAL_MAIL_2_ID = 'special-alert-2'
 
 export function createSpecialMail(): MailItem {
   return {
@@ -585,6 +589,30 @@ export function createSpecialMail(): MailItem {
     group: 'today',
     folderId: 'inbox',
   }
+}
+
+export function createSecondSpecialMail(): MailItem {
+  const videoAttachments = getSpecialMail2AttachmentNames()
+
+  return {
+    id: SPECIAL_MAIL_2_ID,
+    sender: 'anonymus',
+    subject: '',
+    preview: videoAttachments.join(', '),
+    date: '27 июн',
+    avatarColor: 'bg-neutral-500',
+    avatarText: 'a',
+    hasAttachment: true,
+    videoAttachments,
+    isUnread: true,
+    isImportant: true,
+    group: 'today',
+    folderId: 'inbox',
+  }
+}
+
+export function isSpecialMailId(mailId: string) {
+  return mailId === SPECIAL_MAIL_ID || mailId === SPECIAL_MAIL_2_ID
 }
 
 export function getFolderById(folderId: string) {

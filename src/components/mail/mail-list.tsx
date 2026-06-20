@@ -1,4 +1,4 @@
-import { ChevronDown, Flag, Inbox, Paperclip, Star } from 'lucide-react'
+import { ChevronDown, Film, Flag, Inbox, Paperclip, Star } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 
 import { Badge } from '@/components/ui/badge'
@@ -8,6 +8,17 @@ import { cn } from '@/lib/utils'
 import { getMailPath, groupLabels, type MailGroup, type MailItem } from './mock-data'
 
 const groupOrder: MailGroup[] = ['today', 'yesterday', 'week', 'june']
+
+function VideoAttachmentChip({ name }: { name: string }) {
+  return (
+    <div className="flex min-w-0 max-w-[148px] items-center gap-2 rounded-lg bg-[#f3f3f3] px-2 py-1.5">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-[#7c4dff]">
+        <Film className="size-4 text-white" />
+      </div>
+      <span className="truncate text-[12px] text-[#333]">{name.replace(/\.(mp4|webm)$/i, '')}</span>
+    </div>
+  )
+}
 
 interface MailListProps {
   title: string
@@ -29,9 +40,13 @@ function MailRow({
   isUnread,
   isNew,
   hasAttachment,
+  videoAttachments,
   isStarred,
   isImportant,
 }: MailItem & { folderId: string }) {
+  const hasVideoAttachments = Boolean(videoAttachments?.length)
+  const attachmentCount = videoAttachments?.length ?? 0
+
   return (
     <NavLink
       to={getMailPath(folderId, id)}
@@ -76,23 +91,37 @@ function MailRow({
             </Badge>
           )}
         </div>
-        <p
-          className={cn(
-            'truncate text-[13px]',
-            isUnread ? 'font-medium text-[#111]' : 'text-[#333]',
-          )}
-        >
-          {subject}
-        </p>
+        {subject ? (
+          <p
+            className={cn(
+              'truncate text-[13px]',
+              isUnread ? 'font-medium text-[#111]' : 'text-[#333]',
+            )}
+          >
+            {subject}
+          </p>
+        ) : null}
         <p className="truncate text-[12px] text-[#888]">{preview}</p>
+        {hasVideoAttachments && (
+          <div className="mt-2 flex gap-2 overflow-x-auto pb-0.5">
+            {videoAttachments!.map((name) => (
+              <VideoAttachmentChip key={name} name={name} />
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="flex shrink-0 flex-col items-end gap-1 pt-0.5">
         <div className="flex items-center gap-1.5">
-          {hasAttachment && <Paperclip className="size-3.5 text-[#999]" />}
+          {hasAttachment && !hasVideoAttachments && (
+            <Paperclip className="size-3.5 text-[#999]" />
+          )}
           {isStarred && <Star className="size-3.5 fill-[#ffc107] text-[#ffc107]" />}
           <span className="text-[12px] tabular-nums text-[#999]">{date}</span>
         </div>
+        {hasVideoAttachments && (
+          <span className="text-[11px] tabular-nums text-[#bbb]">{attachmentCount}</span>
+        )}
         <Flag
           className={cn(
             'size-3.5',

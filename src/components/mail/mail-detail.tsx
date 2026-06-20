@@ -1,5 +1,6 @@
 import {
   ArrowLeft,
+  Film,
   Forward,
   MoreHorizontal,
   Paperclip,
@@ -7,24 +8,30 @@ import {
   Star,
   Trash2,
 } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 
-import { getFolderById, getMailBody, SPECIAL_MAIL_ID, type MailItem } from './mock-data'
+import { getFolderById, getMailBody, SPECIAL_MAIL_2_ID, SPECIAL_MAIL_ID, type MailItem } from './mock-data'
+import { FullscreenVideoPlayer } from './fullscreen-video-player'
 import { getSpecialMailImageName, specialMailImages } from '@/assets/mail/images'
+import { specialMail2VideoSrc } from '@/assets/mail/videos'
 
 interface MailDetailProps {
   mail: MailItem
 }
 
 export function MailDetail({ mail }: MailDetailProps) {
+  const [isVideoFullscreen, setIsVideoFullscreen] = useState(false)
   const folder = getFolderById(mail.folderId)
-  const isSpecialMail = mail.id === SPECIAL_MAIL_ID
+  const isFirstSpecialMail = mail.id === SPECIAL_MAIL_ID
+  const isSecondSpecialMail = mail.id === SPECIAL_MAIL_2_ID
+  const isSpecialMail = isFirstSpecialMail || isSecondSpecialMail
   const body = isSpecialMail ? '' : getMailBody(mail)
-  const mailImages = isSpecialMail ? specialMailImages : (mail.images ?? [])
+  const mailImages = isFirstSpecialMail ? specialMailImages : (mail.images ?? [])
   const senderEmail =
     mail.sender === 'anonymus'
       ? 'anonymus@mail.ru'
@@ -67,7 +74,7 @@ export function MailDetail({ mail }: MailDetailProps) {
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <article className="mx-auto max-w-3xl px-6 py-6 pb-12">
           <h1 className="text-[22px] leading-snug font-semibold text-[#111]">
-            {mail.subject}
+            {mail.subject || (isSecondSpecialMail ? 'Без темы' : mail.subject)}
           </h1>
 
           <div className="mt-5 flex items-start gap-3">
@@ -90,7 +97,7 @@ export function MailDetail({ mail }: MailDetailProps) {
               </p>
             </div>
 
-            {mail.hasAttachment && (
+            {mail.hasAttachment && !mail.videoAttachments?.length && (
               <div className="flex items-center gap-1.5 rounded-lg border border-[#e5e5e5] bg-[#fafafa] px-2.5 py-1.5 text-[12px] text-[#666]">
                 <Paperclip className="size-3.5" />
                 Вложение
@@ -98,26 +105,52 @@ export function MailDetail({ mail }: MailDetailProps) {
             )}
           </div>
 
+          {mail.videoAttachments && mail.videoAttachments.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {mail.videoAttachments.map((name) => (
+                <button
+                  key={name}
+                  type="button"
+                  className="flex min-w-[180px] cursor-pointer items-center gap-2 rounded-lg bg-[#f3f3f3] px-2.5 py-2 text-left transition-colors hover:bg-[#ebebeb]"
+                  onClick={() => setIsVideoFullscreen(true)}
+                >
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-[#7c4dff]">
+                    <Film className="size-4 text-white" />
+                  </div>
+                  <span className="truncate text-[13px] text-[#333]">{name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
           <Separator className="my-6 bg-[#efefef]" />
 
           {isSpecialMail ? (
             <div className="space-y-6">
-              {mailImages.length > 0 ? (
-                mailImages.map((src, index) => (
-                  <figure key={`${src}-${index}`} className="overflow-hidden rounded-lg border border-[#efefef] bg-[#fafafa]">
-                    <img
-                      src={src}
-                      alt={getSpecialMailImageName(src, index)}
-                      className="block h-auto w-full object-contain"
-                      loading="lazy"
-                    />
-                  </figure>
-                ))
-              ) : (
-                <p className="text-[14px] text-[#999]">
-                  Изображения не найдены. Добавьте файлы в папку src/assets/mail
-                </p>
+              {isFirstSpecialMail && (
+                <>
+                  {mailImages.length > 0 ? (
+                    mailImages.map((src, index) => (
+                      <figure
+                        key={`${src}-${index}`}
+                        className="overflow-hidden rounded-lg border border-[#efefef] bg-[#fafafa]"
+                      >
+                        <img
+                          src={src}
+                          alt={getSpecialMailImageName(src, index)}
+                          className="block h-auto w-full object-contain"
+                          loading="lazy"
+                        />
+                      </figure>
+                    ))
+                  ) : (
+                    <p className="text-[14px] text-[#999]">
+                      Изображения не найдены. Добавьте файлы в папку src/assets/mail
+                    </p>
+                  )}
+                </>
               )}
+
             </div>
           ) : (
             <div className="space-y-4 text-[14px] leading-relaxed whitespace-pre-line text-[#333]">
@@ -132,6 +165,14 @@ export function MailDetail({ mail }: MailDetailProps) {
           )}
         </article>
       </div>
+
+      {isSecondSpecialMail && (
+        <FullscreenVideoPlayer
+          src={specialMail2VideoSrc}
+          open={isVideoFullscreen}
+          onClose={() => setIsVideoFullscreen(false)}
+        />
+      )}
     </main>
   )
 }
