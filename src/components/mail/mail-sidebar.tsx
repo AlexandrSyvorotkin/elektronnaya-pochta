@@ -11,16 +11,17 @@ import {
   Plus,
   Receipt,
   Send,
-  Settings,
   ShieldAlert,
   StickyNote,
   Trash2,
   User,
   Users,
 } from 'lucide-react'
+import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
+import { ShootModeSettingsPopover } from '@/components/mail/shoot-mode-settings-popover'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
@@ -46,6 +47,8 @@ const iconMap = {
 } as const
 
 export function MailSidebar() {
+  const [menuOpen, setMenuOpen] = useState(false)
+
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r border-[#e5e5e5] bg-[#fafafa]">
       <div className="p-3">
@@ -106,13 +109,14 @@ export function MailSidebar() {
       <Separator className="bg-[#e5e5e5]" />
 
       <div className="p-3">
-        <button
-          type="button"
-          className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-[#666] hover:bg-[#f0f0f0]"
-        >
-          <Settings className="size-4" />
-          Настройки
-        </button>
+        <ShootModeSettingsPopover
+          open={menuOpen}
+          onOpenChange={setMenuOpen}
+          currentMode="mail"
+          side="top"
+          align="start"
+          triggerClassName="w-full"
+        />
       </div>
     </aside>
   )

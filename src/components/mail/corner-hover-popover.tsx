@@ -3,14 +3,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { useMail, type SpecialMailKey } from '@/context/mail-context'
+import { useShootSettings } from '@/context/shoot-settings-context'
 import { MailDateInput } from '@/components/mail/mail-date-input'
 
 import {
@@ -38,8 +32,6 @@ interface SpecialMailSettingsColumnProps {
     schedule: () => void
     remove: () => void
   }
-  onSelectOpenChange: (isOpen: boolean) => void
-  onSelectOpen: () => void
   onDateFocus: () => void
   onDateBlur: () => void
 }
@@ -59,8 +51,6 @@ function SpecialMailSettingsColumn({
   slotKey,
   scheduleDelayId,
   slot,
-  onSelectOpenChange,
-  onSelectOpen,
   onDateFocus,
   onDateBlur,
 }: SpecialMailSettingsColumnProps) {
@@ -90,31 +80,21 @@ function SpecialMailSettingsColumn({
           <Label htmlFor={scheduleDelayId} className="text-[12px] text-[#666]">
             Отправить через
           </Label>
-          <Select
+          <select
+            id={scheduleDelayId}
             value={String(slot.scheduleDelayMs)}
-            onOpenChange={(isOpen) => {
-              onSelectOpenChange(isOpen)
-              if (isOpen) onSelectOpen()
-            }}
-            onValueChange={(value) =>
-              slot.setScheduleDelayMs(Number(value) as ScheduleDelayMs)
+            onChange={(event) =>
+              slot.setScheduleDelayMs(Number(event.target.value) as ScheduleDelayMs)
             }
             disabled={slot.isSchedulePending || Boolean(slot.mail)}
+            className="h-9 w-full rounded-lg border border-[#e0e0e0] bg-white px-2.5 text-[13px] text-[#333] shadow-none outline-none focus:border-[#7c4dff] focus:ring-2 focus:ring-[#7c4dff]/20 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <SelectTrigger
-              id={scheduleDelayId}
-              className="h-9 w-full border-[#e0e0e0] text-[13px] shadow-none"
-            >
-              <SelectValue placeholder="Выберите время" />
-            </SelectTrigger>
-            <SelectContent position="popper" side="top" align="start">
-              {SCHEDULE_DELAY_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={String(option.value)}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            {SCHEDULE_DELAY_OPTIONS.map((option) => (
+              <option key={option.value} value={String(option.value)}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         <Button
@@ -160,10 +140,9 @@ function SpecialMailSettingsColumn({
 
 export function CornerHoverPopover() {
   const { specialMailSlots } = useMail()
-  const [open, setOpen] = useState(false)
+  const { isOpen, toggleSettings, closeSettings } = useShootSettings()
   const [cornerHover, setCornerHover] = useState(false)
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const selectOpenCountRef = useRef(0)
   const datePickerOpenCountRef = useRef(0)
 
   const clearHideTimer = useCallback(() => {
@@ -182,14 +161,10 @@ export function CornerHoverPopover() {
     clearHideTimer()
 
     hideTimerRef.current = setTimeout(() => {
-      if (selectOpenCountRef.current > 0 || datePickerOpenCountRef.current > 0) return
+      if (datePickerOpenCountRef.current > 0) return
       setCornerHover(false)
-      setOpen(false)
+      closeSettings()
     }, HIDE_DELAY_MS)
-  }
-
-  const handleSelectOpenChange = (isOpen: boolean) => {
-    selectOpenCountRef.current += isOpen ? 1 : -1
   }
 
   const handleDateFocus = () => {
@@ -205,11 +180,11 @@ export function CornerHoverPopover() {
     return () => clearHideTimer()
   }, [clearHideTimer])
 
-  const showToggle = cornerHover || open
+  const showToggle = cornerHover || isOpen
 
   return (
     <>
-      {!open && (
+      {!isOpen && (
         <div
           aria-hidden
           className="fixed right-0 bottom-0 z-50 size-20"
@@ -226,15 +201,15 @@ export function CornerHoverPopover() {
         <div
           className={cn(
             'overflow-hidden transition-[width] duration-300 ease-out',
-            open ? PANEL_WIDTH : 'w-0',
+            isOpen ? PANEL_WIDTH : 'w-0',
           )}
         >
           <aside
-            aria-hidden={!open}
+            aria-hidden={!isOpen}
             className={cn(
               `${PANEL_WIDTH} shrink-0 overflow-hidden border-2 border-r-0 border-[#7c4dff] bg-white`,
               'rounded-tl-xl shadow-[0_-8px_32px_rgba(124,77,255,0.28)]',
-              !open && 'pointer-events-none',
+              !isOpen && 'pointer-events-none',
             )}
           >
             <div className="flex items-center gap-2 border-b border-[#eadfff] bg-gradient-to-r from-[#7c4dff] to-[#6a3de8] px-4 py-2.5">
@@ -252,8 +227,6 @@ export function CornerHoverPopover() {
                   title={SLOT_LABELS[key]}
                   scheduleDelayId={`schedule-delay-${key}`}
                   slot={specialMailSlots[key]}
-                  onSelectOpenChange={handleSelectOpenChange}
-                  onSelectOpen={clearHideTimer}
                   onDateFocus={handleDateFocus}
                   onDateBlur={handleDateBlur}
                 />
@@ -264,20 +237,20 @@ export function CornerHoverPopover() {
 
         <button
           type="button"
-          aria-expanded={open}
-          aria-label={open ? 'Скрыть настройки' : 'Открыть настройки'}
+          aria-expanded={isOpen}
+          aria-label={isOpen ? 'Скрыть настройки' : 'Открыть настройки'}
           className={cn(
             'flex h-11 items-center justify-center border-2 border-[#6a3de8] bg-[#7c4dff] text-white transition-all duration-200 hover:bg-[#6a3de8]',
-            open
+            isOpen
               ? 'w-8 rounded-tl-md shadow-[0_0_0_3px_rgba(124,77,255,0.35)]'
               : 'w-10 rounded-tl-lg shadow-[0_0_18px_rgba(124,77,255,0.55)]',
             showToggle
               ? 'pointer-events-auto translate-x-0 opacity-100'
               : 'pointer-events-none -translate-x-1 opacity-0',
           )}
-          onClick={() => setOpen((value) => !value)}
+          onClick={toggleSettings}
         >
-          {open ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
+          {isOpen ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
         </button>
       </div>
     </>
