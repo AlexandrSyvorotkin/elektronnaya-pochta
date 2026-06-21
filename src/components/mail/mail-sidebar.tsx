@@ -50,7 +50,7 @@ export function MailSidebar() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
-    <aside className="flex w-56 shrink-0 flex-col border-r border-[#e5e5e5] bg-[#fafafa]">
+    <aside className="flex h-full min-h-0 w-56 shrink-0 flex-col border-r border-[#e5e5e5] bg-[#fafafa]">
       <div className="p-3">
         <Button className="h-9 w-full rounded-lg bg-[#005ff9] text-[13px] font-medium text-white shadow-none hover:bg-[#0050d4]">
           <PenLine className="size-4" />
@@ -58,7 +58,7 @@ export function MailSidebar() {
         </Button>
       </div>
 
-      <ScrollArea className="flex-1 px-2">
+      <ScrollArea className="min-h-0 flex-1 px-2">
         <ul className="space-y-0.5 pb-2">
           {sidebarFolders.map((folder) => {
             const Icon = iconMap[folder.icon]
